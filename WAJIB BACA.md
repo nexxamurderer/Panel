@@ -1,16 +1,7 @@
-WELLCOME TO SOURCE CODE CREATE PANEL PTERODACTYL V2 MADE IN RESELLER GAMING 
-
-💸 Donate
-https://donate.resellergaming.my.id
-
-Channel Info Developer ( WhatsApp )
-https://whatsapp.com/channel/0029VbAt2GM7j6g6d13Xx01X
-
-Channel Info Developer ( Telegram )
-https://t.me/InfoResellerGamingDEV
+WELLCOME TO SOURCE CODE CREATE PANEL PTERODACTYL V2 MADE IN NEXXA OFFICIAL
 
 👨‍💻 kontak Developer
-https://t.me/ResellerGamingoffcial
+https://t.me/nexxanybobo
 
 
 Sebelum memakai SOUCE CODE ini dan sebelum deploy di vercel diharapkan membaca ini terlebih AGAR berfungsi dengan baik ✅
@@ -44,15 +35,15 @@ const BOT_TOKEN    = "GANTI_DENGAN_TOKEN_BOT_ANDA";  // ← taruh token Anda di 
 dibagian https://domain.com ganti dengan domain panel pterodactyl dan bagian plta_xxxx ganti dengan PLTA 
 
 
-(JASA PASANG CUMA 5K )
-KALO GAK BISA CARA PAKAI LANGSUNG JASA HOSTING/DEPLOY TINGGAL TERIMA JADI + REQ DOMAIN,
-chat langsung via telegram https://t.me/ResellerGamingoffcal
+(JASA PASANG CUMA 10K )
+KALO GAK BISA CARA PAKAI LANGSUNG JASA DEPLOY TINGGAL TERIMA JADI + REQ DOMAIN,
+chat langsung via telegram https://t.me/nexxanybobo
 
 
-RESELLER GAMING
-MENYEDIAKAN pane pterodactyl, Reseller panel pterodactyl, VPS, jasa pembuatan website, jasa pembuatan Script bot, domain, api dan lain lain dengan harga murah meriah 
+NEXXA OFFICIAL
+MENYEDIAKAN panel pterodactyl, Reseller panel pterodactyl, jasa pembuatan website.
 
 
-MADE IN RESELLER GAMING 
+MADE IN NEXXA OFFICIAL
 
-© Reseller Gaming 
+© Nexxa Official
