@@ -1,1 +1,1090 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel</title>
+  <style>
+    :root {
+      --bg: #0a0c16;
+      --card: #131722;
+      --text: #ffffff;
+      --primary: #2ecc71; 
+      --danger: #e74c3c;  
+      --sidebar: #0e111b;
+      --shadow: rgba(0, 0, 0, 0.5);
+      --input-bg: #1b2031;
+    }
+    body.dark {
+      --bg: #0a0c16;
+      --card: #131722;
+      --text: #ffffff;
+      --sidebar: #0e111b;
+      --shadow: rgba(0, 0, 0, 0.5);
+    }
+    * { box-sizing: border-box; transition: background-color .3s, color .3s; }
+    body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+    aside {
+      width: 250px;
+      background: var(--sidebar);
+      box-shadow: 2px 0 10px var(--shadow);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      z-index: 999;
+      transform: translateX(-100%);
+      transition: transform .3s ease;
+    }
+    aside.show { transform: translateX(0); }
+    aside h2 { font-size: 20px; margin-bottom: 30px; color: var(--text); }
+    nav button {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      padding: 12px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px;
+      color: #8fa0dd;
+    }
+    nav button:hover, nav button.active { background: var(--primary); color: #0a0c16; font-weight: bold; }
+    main { flex: 1; padding: 30px; overflow-y: auto; margin-left: 0; transition: margin-left .3s ease; }
+    .page { display: none; animation: fadeIn .4s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px var(--shadow); margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .stat { font-size: 18px; margin: 8px 0; }
+    .stat strong { color: var(--primary); }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .toggle-dark { background: transparent; border: 1px solid var(--text); color: var(--text); padding: 6px 12px; cursor: pointer; border-radius: 6px; display: none; }
+    .hamburger { font-size: 24px; background: none; border: none; color: var(--text); cursor: pointer; margin-right: 20px; }
+    
+    /* ===== PERBAIKAN TABEL RESELLER AGAR TIDAK KELUAR JALUR ===== */
+    .table-container {
+      width: 100%;
+      overflow-x: auto; /* Membikin scroll horizontal otomatis kalau layar kekecilan */
+      margin-top: 15px;
+      border-radius: 8px;
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      color: var(--text); 
+      min-width: 500px; /* Menjaga agar tabel punya ruang minimal */
+    }
+    th, td { 
+      padding: 12px 10px; 
+      text-align: left; 
+      border-bottom: 1px solid rgba(255,255,255,0.1); 
+      word-break: break-word; /* Memotong teks otomatis jika terlalu panjang */
+    }
+    th { background: rgba(255,255,255,0.02); color: #8fa0dd; font-weight: 600; }
+    
+    /* Style Tombol Hapus didalam tabel */
+    .btn-delete {
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap; /* Mencegah teks tombol terpotong ke bawah */
+      display: inline-block;
+      text-align: center;
+    }
+    .btn-delete:hover {
+      filter: brightness(0.9);
+    }
 
+    input, select, button[type=submit] { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: var(--input-bg); color: var(--text); }
+    input::placeholder { color: rgba(255,255,255,0.4); }
+    button[type=submit] { background: var(--primary); color: #0a0c16; font-weight: bold; border: none; cursor: pointer; }
+
+    .spinner{
+      border:4px solid rgba(255,255,255,0.1);
+      border-top:4px solid var(--primary);
+      border-radius:50%;
+      width:30px;
+      height:30px;
+      animation:spin 1s linear infinite;
+      margin:10px auto 0;
+    }
+    @keyframes spin{to{transform:rotate(360deg);}}
+  </style>
+  <style>
+/* ===== CREATE PANEL STYLE ===== */
+#createpanel .card {
+  text-align: center;
+}
+#createpanel label {
+  text-align: left;
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #8fa0dd;
+}
+#createpanel button {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: #0a0c16;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+#createpanel button:hover {
+  filter: brightness(1.1);
+}
+#createpanel .hidden {
+  display: none;
+}
+#createpanel .success-box {
+  text-align: left;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  padding: 15px;
+  font-size: 14px;
+  color: #fff;
+  margin-bottom: 20px;
+}
+  </style>
+  <style>
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.date-clock {
+  font-size: 14px;
+  color: #8fa0dd;
+}
+.time {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+.info-card {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 20px var(--shadow);
+  transition: transform .2s;
+}
+.info-card:hover {
+  transform: translateY(-5px);
+}
+.info-card .icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+.info-card .value {
+  font-size: 28px;
+  font-weight: 600;
+}
+.info-card .label {
+  font-size: 14px;
+  color: #8fa0dd;
+}
+
+.gradient-blue  { background: linear-gradient(135deg, #1f2742 0%, #131722 100%); color: #fff; }
+.gradient-green { background: linear-gradient(135deg, #1a3c2b 0%, #131722 100%); color: #fff; border-bottom: 3px solid var(--primary); }
+.gradient-purple{ background: linear-gradient(135deg, #2d1a3c 0%, #131722 100%); color: #fff; }
+.gradient-orange{ background: linear-gradient(135deg, #3c271a 0%, #131722 100%); color: #fff; border-bottom: 3px solid var(--danger); }
+
+.chart {
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 20px;
+}
+.bar-group {
+  display: flex;
+  gap: 40px;
+  align-items: flex-end;
+}
+.bar {
+  width: 50px;
+  background: var(--primary);
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  transition: height 1s ease-out;
+}
+.bar::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #8fa0dd;
+}
+.chart-labels {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+/* ===== TOMBOL CEPAT ===== */
+.quick-action {
+  display: flex;
+  gap: 12px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+.quick-action button {
+  flex: 1 1 160px;
+  padding: 12px;
+  background: var(--input-bg);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.quick-action button:hover {
+  background: var(--primary);
+  color: #0a0c16;
+  font-weight: bold;
+}
+  </style>
+  <style>
+/* ===== CREATE ADMIN STYLE ===== */
+#createadmin .card {
+  background: var(--card);
+  color: #fff;
+  box-shadow: 0 0 20px var(--shadow);
+  border-radius: 12px;
+  padding: 30px;
+}
+#createadmin button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--primary);
+  color: #0a0c16;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background .3s;
+}
+#createadmin button:hover {
+  filter: brightness(1.1);
+}
+#createadmin .loading {
+  display: none;
+  text-align: center;
+  margin-top: 10px;
+  color: var(--primary);
+}
+#createadmin .result {
+  display: none;
+  margin-top: 20px;
+  font-size: 14px;
+  text-align: left;
+}
+#createadmin .result p {
+  margin: 5px 0;
+}
+#createadmin .note {
+  margin-top: 15px;
+  font-size: 12px;
+  color: var(--danger);
+}
+  </style>
+  <style>
+/* ===== CLEAR SERVER STYLE ===== */
+#clearserver .card {
+  background: var(--card);
+  color: #fff;
+  box-shadow: 0 0 20px var(--shadow);
+  border-radius: 15px;
+  padding: 40px 30px;
+}
+#clearserver h2 {
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+#clearserver .warning-box {
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 25px;
+  font-size: 14px;
+  color: var(--danger);
+}
+#clearserver button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background .3s;
+}
+#clearserver button:hover {
+  filter: brightness(0.9);
+}
+#clearserver .loading {
+  display: none;
+  text-align: center;
+  margin-top: 20px;
+}
+#clearserver .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top: 4px solid var(--danger);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+#clearserver .result {
+  margin-top: 25px;
+  padding: 15px;
+  border-radius: 8px;
+  display: none;
+  font-weight: 600;
+}
+#clearserver .success {
+  background: var(--primary);
+  color: #0a0c16;
+}
+#clearserver .error {
+  background: var(--danger);
+  color: #fff;
+}
+  </style>
+</head>
+<body class="dark">
+
+<aside id="sidebar">
+  <h2>Admin Panel</h2>
+  <nav>
+    <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
+    <button class="nav-btn" data-page="server">🖥 Server</button>
+    <button class="nav-btn" data-page="reseller">👤 Reseller</button>
+    <button class="nav-btn" data-page="create">➕ Create User</button>
+    <button class="nav-btn" data-page="createpanel">🧩 Create Panel</button>
+    <button class="nav-btn" data-page="createadmin">🔐 Create Admin</button>
+    <button class="nav-btn" data-page="clearserver">🗑 Clear Server</button>
+  </nav>
+</aside>
+
+<main id="main">
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <h1 id="pageTitle">Dashboard</h1>
+    <button class="toggle-dark" onclick="toggleDark()">🌙 Dark</button>
+  </div>
+
+<div class="page active" id="dashboard">
+  <div class="card-header">
+    <div class="date-clock" id="dateClock">-</div>
+    <div class="time" id="clock">00:00:00</div>
+  </div>
+
+  <h2>📊 Dashboard</h2>
+
+  <div class="info-grid">
+    <div class="info-card gradient-blue">
+      <div class="icon">👥</div>
+      <div class="value" id="totalUsers">-</div>
+      <div class="label">Total User</div>
+    </div>
+    <div class="info-card gradient-green">
+      <div class="icon">🖥</div>
+      <div class="value" id="totalServers">-</div>
+      <div class="label">Total Server</div>
+    </div>
+    <div class="info-card gradient-orange">
+      <div class="icon">🔋</div>
+      <div class="value" id="battery">-</div>
+      <div class="label">Baterai</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:30px;">
+    <h3>📈 User & Server</h3>
+  <div style="display:flex;gap:12px;margin-bottom:10px">
+    <button id="btnPlayServer" class="btn primary" style="background:var(--input-bg); color:#fff; border:1px solid rgba(255,255,255,0.1); padding:6px 12px; border-radius:6px; cursor:pointer;">▶ Animasi</button>
+    <input id="barColorServer" type="color" value="#2ecc71" style="width:40px; padding:0; height:30px; border:none; background:transparent;">
+  </div>
+  <svg id="barChartServer" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet"
+       style="width:100%;max-height:360px;background:rgba(255,255,255,.015);border-radius:10px">
+    <defs>
+      <linearGradient id="barGradServer" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#2ecc71" stop-opacity=".95"/>
+        <stop offset="100%" stop-color="#27ae60" stop-opacity=".85"/>
+      </linearGradient>
+    </defs>
+    <g id="barGroupServer" transform="translate(60,20)"></g>
+  </svg>
+  <div style="display:flex;justify-content:center;gap:30px;margin-top:10px;font-size:14px">
+    <span>User: <b id="txtUserServer">0</b></span>
+    <span>Server: <b id="txtServerServer">0</b></span>
+  </div>
+</div>
+
+  <div class="quick-action">
+    <button onclick="gotoPage('createpanel')">➕ Buat Panel</button>
+    <button onclick="gotoPage('server')">🖥 Lihat Server</button>
+    <button onclick="gotoPage('reseller')">👤 Kelola Reseller</button>
+  </div>
+</div>
+  
+  <div class="page" id="server">
+    <div class="card">
+      <h3>Daftar Server (API)</h3>
+      <button onclick="loadServers()" style="margin-bottom:12px; background:var(--primary); color:#0a0c16; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer;">🔄 Refresh</button>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nama</th>
+              <th>Identifier</th>
+              <th>Owner</th>
+            </tr>
+          </thead>
+          <tbody id="serverTableBody">
+            <tr><td colspan="4" style="text-align:center;padding:20px">⏳ Memuat server...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="reseller">
+    <div class="card">
+      <h3>👤 Kelola Reseller</h3>
+      <button onclick="loadResellers()" style="margin-bottom:10px;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:var(--input-bg);color:#fff;cursor:pointer;">🔄 Refresh</button>
+      <input type="text" id="searchReseller" placeholder="🔍 Cari reseller berdasarkan username..." style="width:100%;padding:10px;margin-bottom:15px;border-radius:8px;" onkeyup="filterReseller()">
+      
+      <div class="table-container">
+        <table id="resellerTable">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Username</th>
+              <th>Password</th>
+              <th>Dibuat</th>
+              <th style="width: 100px; text-align: center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5" style="text-align:center;">⏳ Memuat data reseller...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p id="lastUpdate" style="font-size:12px;color:#888;margin-top:10px;">Terakhir diperbarui: -</p>
+    </div>
+  </div>
+
+  <div class="page" id="create">
+    <div class="card" style="max-width: 400px; margin: 0 auto;">
+      <h3>Buat Akun Baru</h3>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="registerUser()" style="width: 100%; padding: 12px; background: var(--primary); color: #0a0c16; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px;">Daftar</button>
+    </div>
+  </div>
+
+  <div class="page" id="createpanel">
+    <div class="card" style="max-width:420px;margin:0 auto;">
+      <img src="https://cdn-icons-png.flaticon.com/512/4712/4712100.png" style="width:60px;margin-bottom:20px;">
+      <h2>Buat Panel Baru</h2>
+      <p class="sub" style="color:#8fa0dd;">Isi username, pilih paket RAM & masukkan ID Telegram</p>
+
+      <div id="step1">
+        <label>Username</label>
+        <input type="text" id="panelUsername" placeholder="Masukkan username">
+
+        <label>Paket RAM</label>
+        <select id="paket">
+          <option value="">-- Pilih Paket --</option>
+          <option value="1gb">1GB</option>
+          <option value="2gb">2GB</option>
+          <option value="3gb">3GB</option>
+          <option value="4gb">4GB</option>
+          <option value="5gb">5GB</option>
+          <option value="6gb">6GB</option>
+          <option value="7gb">7GB</option>
+          <option value="8gb">8GB</option>
+          <option value="9gb">9GB</option>
+          <option value="10gb">10GB</option>
+          <option value="unli">Unlimited</option>
+        </select>
+
+        <label>ID Telegram</label>
+        <input type="text" id="tele" placeholder="Contoh: 123456789">
+
+        <button onclick="buatPanel()">Buat Panel</button>
+      </div>
+
+      <div id="step2" class="hidden">
+        <div class="success-box">
+          <b>Email:</b> <span id="email"></span><br>
+          <b>Username:</b> <span id="uname"></span><br>
+          <b>Password:</b> <span id="pass"></span><br>
+          <b>Link:</b> <a href="https://domainpanel.resellergaming.my.id" target="_blank" style="color:var(--primary);">Buka Panel</a><br>
+          <b>Paket:</b> <span id="ram"></span><br>
+          <b>Telegram:</b> <span id="teleResult"></span>
+        </div>
+        <button onclick="resetPanelForm()">Buat Panel Lagi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="createadmin">
+    <div class="card" style="max-width:480px;margin:0 auto;text-align:center;">
+      <h2>Create Admin Panel</h2>
+      <input type="text" id="adminUser" placeholder="Masukkan username">
+      <input type="text" id="adminTele" placeholder="ID Telegram (opsional)">
+      <button onclick="createAdmin()">Create Admin Panel</button>
+      <div class="loading" id="loadingAdmin">Membuat admin panel...</div>
+      <div class="result" id="resultAdmin">
+        <p><strong>Creator:</strong> <span id="creator"></span></p>
+        <p><strong>Username:</strong> <span id="resUsername"></span></p>
+        <p><strong>Password:</strong> <span id="password"></span></p>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+        <p><strong>Domain:</strong> <span id="domain"></span></p>
+        <div class="note">Note: Jangan rusuh anjing kalo make adp</div>
+        <button onclick="resetAdminForm()" style="margin-top:15px; background:var(--input-bg); color:#fff; border:1px solid rgba(255,255,255,0.1);">Buat Lagi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="clearserver">
+    <div class="card" style="max-width:480px;margin:0 auto;text-align:center;">
+      <h2>Clear Server</h2>
+      <div class="warning-box">
+        ⚠️ <strong>WARNING</strong> ⚠️<br>
+        Sebelum clear all server / membersihkan semua server harap pikir kembali dan ini hanya membersihkan server bukan dengan user, sekian terima ☺️
+      </div>
+      <button onclick="clearServer()">Clear Server</button>
+      <div class="loading" id="loadingClear">
+        <div class="spinner"></div>
+        <p>Menghapus server, harap tunggu...</p>
+      </div>
+      <div class="result" id="resultClear"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const DOMAIN = "https://nexxanewgen.keselekbijiwowo.web.id"; 
+const PLTA   = "ptla_HSOOTrF4l4RKidodh0nKahK4dKCqplIXpRJtimUG3gz"; 
+const BOT_TOKEN    = "8137374232:AAEgXklPRxWOCdotY5Y8EgMUxf19__pKwEU";  
+
+const buttons = document.querySelectorAll('.nav-btn');
+const pages   = document.querySelectorAll('.page');
+const pageTitle = document.getElementById('pageTitle');
+const sidebar = document.getElementById('sidebar');
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.getAttribute('data-page');
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    pages.forEach(p => p.classList.remove('active'));
+    document.getElementById(target).classList.add('active');
+    pageTitle.textContent = btn.textContent.slice(2);
+    sidebar.classList.remove('show');
+    if (target === 'reseller') loadResellers();
+  });
+});
+
+function toggleDark() { document.body.classList.toggle('dark'); }
+function toggleSidebar() { sidebar.classList.toggle('show'); }
+
+function updateClock() {
+  const now = new Date();
+  const clk = document.getElementById('clock');
+  if(clk) clk.textContent = now.toLocaleTimeString('id-ID');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+if ('getBattery' in navigator) {
+  navigator.getBattery().then(battery => {
+    function updateBattery() {
+      const level = Math.round(battery.level * 100);
+      const charging = battery.charging ? '🔌 Charging' : '🔋 Baterai';
+      const batEl = document.getElementById('battery');
+      if(batEl) batEl.textContent = `${charging}: ${level}%`;
+    }
+    updateBattery();
+    battery.addEventListener('levelchange', updateBattery);
+    battery.addEventListener('chargingchange', updateBattery);
+  });
+}
+
+async function loadServers() {
+  const tbody = document.getElementById('serverTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" style="text-align:center;padding:20px">
+        <div>⏳ Memuat server...</div>
+        <small>Estimasi 30-90 detik</small>
+        <div class="spinner"></div>
+      </td>
+    </tr>`;
+
+  const url = `https://api.resellergaming.my.id/pterodactyl/listserver?domain=${encodeURIComponent(DOMAIN)}&plta=${PLTA}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120_000);
+
+  try {
+    const r = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    const j = await r.json();
+
+    if (!j.status) throw new Error(j.message || 'API gagal');
+
+    tbody.innerHTML = '';
+    j.servers.forEach((s, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${s.name}</td>
+        <td>${s.identifier}</td>
+        <td>${s.owner_id}</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    let msg = err.name === 'AbortError' ? '⏱ Request timeout (120 detik)' : err.message;
+    tbody.innerHTML = `<tr><td colspan="4" style="color:red;text-align:center;padding:20px">❌ ${msg}</td></tr>`;
+  }
+}
+
+/* ========== FUNGSI UTAMA RESELLER (DENGAN RE-STYLING TOMBOL) ========== */
+async function loadResellers() {
+  const tbody = document.querySelector("#resellerTable tbody");
+  const last = document.getElementById("lastUpdate");
+  if(!tbody) return;
+  tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>⏳ Memuat...</td></tr>";
+
+  try {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+
+    const res = await fetch("/api/getUsers", {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Gagal ambil data reseller");
+
+    tbody.innerHTML = "";
+    data.users.forEach((u, i) => {
+      const tr = document.createElement("tr");
+      // Menambahkan kelas .btn-delete agar tombol konsisten ukurannya
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${u.username}</td>
+        <td>${u.password}</td>
+        <td>${new Date(u.created_at).toLocaleString('id-ID')}</td>
+        <td style="text-align:center;">
+          <button onclick="deleteUser('${u.username}')" class="btn-delete">Hapus</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    if(last) last.textContent = "Terakhir diperbarui: " + new Date().toLocaleTimeString();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan='5' style='color:red;text-align:center;'>❌ ${err.message}</td></tr>`;
+  }
+}
+
+function filterReseller() {
+  const input = document.getElementById("searchReseller").value.toLowerCase();
+  const rows = document.querySelectorAll("#resellerTable tbody tr");
+  rows.forEach(row => {
+    const username = row.cells[1]?.textContent.toLowerCase();
+    if(username) {
+      row.style.display = username.includes(input) ? "" : "none";
+    }
+  });
+}
+
+async function registerUser() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+  if (!username || !password) return alert('❌ Username dan Password wajib diisi!');
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert('✅ User berhasil dibuat!');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    } else {
+      alert('❌ ' + (data.error || 'Gagal membuat user'));
+    }
+  } catch (err) {
+    alert('❌ Terjadi kesalahan: ' + err.message);
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm(`Yakin ingin menghapus user "${username}"?`)) return;
+  try {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+
+    const res = await fetch("/api/deleteUser", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify({ username })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert("✅ User berhasil dihapus");
+      loadResellers();
+    } else {
+      alert("❌ " + (data.error || "Gagal menghapus user"));
+    }
+  } catch (err) {
+    alert("❌ Terjadi kesalahan: " + err.message);
+  }
+}
+
+const HARGA_PAKET = {
+  "1gb":  { ram: 1000, disk: 1000, cpu: 40  },
+  "2gb":  { ram: 2000, disk: 1000, cpu: 60  },
+  "3gb":  { ram: 3000, disk: 2000, cpu: 80  },
+  "4gb":  { ram: 4000, disk: 2000, cpu: 100 },
+  "5gb":  { ram: 5000, disk: 3000, cpu: 120 },
+  "6gb":  { ram: 6000, disk: 3000, cpu: 140 },
+  "7gb":  { ram: 7000, disk: 4000, cpu: 160 },
+  "8gb":  { ram: 8000, disk: 4000, cpu: 180 },
+  "9gb":  { ram: 9000, disk: 5000, cpu: 200 },
+  "10gb": { ram:10000, disk: 5000, cpu: 220 },
+  "unli": { ram: 0,    disk: 0,    cpu: 0   }
+};
+
+async function buatPanel() {
+  const username = document.getElementById('panelUsername').value.trim();
+  const paket    = document.getElementById('paket').value;
+  const tele     = document.getElementById('tele').value.trim();
+
+  if (!username || !paket) return alert('Username dan paket wajib diisi!');
+  const conf = HARGA_PAKET[paket];
+
+  try {
+    const res = await fetch(`https://api.resellergaming.my.id/pterodactyl/addpanel?domain=${encodeURIComponent(DOMAIN)}&plta=${PLTA}&username=${username}&disk=${conf.disk}&cpu=${conf.cpu}`);
+    const data = await res.json();
+
+    if (!data || !data.user) throw new Error('Gagal membuat panel');
+
+    if (tele) {
+      const msg = `🎉 Panel baru dibuat!\n\nUsername: ${username}\nPaket: ${paket.toUpperCase()}\nLink: ${DOMAIN}`;
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: tele, text: msg })
+      }).catch(() => {});
+    }
+
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+
+    document.getElementById('email').innerText     = data.user.attributes.email;
+    document.getElementById('uname').innerText     = data.user.attributes.username;
+    document.getElementById('pass').innerText      = data.user.attributes.username; 
+    document.getElementById('ram').innerText       = paket.toUpperCase();
+    document.getElementById('teleResult').innerText = tele || '-';
+  } catch (err) {
+    alert('Terjadi kesalahan: ' + err.message);
+  }
+}
+
+function resetPanelForm() {
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step1').classList.remove('hidden');
+  document.getElementById('panelUsername').value = '';
+  document.getElementById('paket').value = '';
+  document.getElementById('tele').value = '';
+}
+
+function gotoPage(pageId) {
+  buttons.forEach(b => b.classList.remove('active'));
+  pages.forEach(p => p.classList.remove('active'));
+  const btn = document.querySelector(`[data-page="${pageId}"]`);
+  if(btn) btn.classList.add('active');
+  document.getElementById(pageId).classList.add('active');
+  if(btn) pageTitle.textContent = btn.textContent.slice(2);
+}
+
+let userCount   = 0;
+let serverCount = 0;
+
+async function countUsers() {
+  try {
+    const token = localStorage.getItem("admin_token");
+    const res   = await fetch("/api/users", {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const data  = await res.json();
+    userCount = data.length;
+    document.getElementById('totalUsers').innerText = userCount;
+  } catch {
+    userCount = 0;
+    document.getElementById('totalUsers').innerText = '-';
+  }
+}
+
+async function countServers() {
+  const url = `https://api.resellergaming.my.id/pterodactyl/listserver?domain=${encodeURIComponent(DOMAIN)}&plta=${PLTA}`;
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    serverCount = j.status ? j.servers.length : 0;
+    document.getElementById('totalServers').innerText = serverCount;
+  } catch {
+    serverCount = 0;
+    document.getElementById('totalServers').innerText = '-';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  countUsers();
+  countServers();
+});
+
+async function createAdmin() {
+  const username = document.getElementById('adminUser').value.trim();
+  const tele     = document.getElementById('adminTele').value.trim();
+  if (!username) return alert('Username wajib diisi!');
+
+  const url = `https://api.resellergaming.my.id/pterodactyl/addadmin?domain=${encodeURIComponent(DOMAIN)}&plta=${PLTA}&username=${username}`;
+  document.getElementById('loadingAdmin').style.display = 'block';
+  document.getElementById('resultAdmin').style.display  = 'none';
+
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.status) {
+      document.getElementById('creator').innerText     = data.creator;
+      document.getElementById('resUsername').innerText = data.data.attributes.username;
+      document.getElementById('password').innerText    = data.data.attributes.username; 
+      document.getElementById('email').innerText       = data.data.attributes.email;
+      document.getElementById('domain').innerText      = DOMAIN;
+
+      if (tele) {
+        const msg = `✅ Admin panel baru dibuat!\n\nUsername: ${username}\nDomain: ${DOMAIN}`;
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: tele, text: msg })
+        }).catch(() => {});
+      }
+      document.getElementById('resultAdmin').style.display = 'block';
+    } else {
+      alert('Gagal membuat admin: ' + data.message);
+    }
+  } catch (err) {
+    alert('Terjadi kesalahan: ' + err.message);
+  } finally {
+    document.getElementById('loadingAdmin').style.display = 'none';
+  }
+}
+
+function resetAdminForm() {
+  document.getElementById('resultAdmin').style.display  = 'none';
+  document.getElementById('loadingAdmin').style.display = 'none';
+  document.getElementById('adminUser').value = '';
+  document.getElementById('adminTele').value = '';
+}
+
+async function clearServer() {
+  const loading = document.getElementById('loadingClear');
+  const result  = document.getElementById('resultClear');
+  if (!confirm('Yakin ingin menghapus SEMUA server? Tindakan ini tidak dapat dibatalkan.')) return;
+
+  loading.style.display = 'block';
+  result.style.display  = 'none';
+
+  const url = `https://api.nvidiabotz.xyz/pterodactyl/clearserver?domain=${encodeURIComponent(DOMAIN)}&plta=${encodeURIComponent(PLTA)}`;
+
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showResult('success', '✅ Semua server berhasil dibersihkan!');
+      setTimeout(() => countServers(), 1500);
+    } else {
+      showResult('error', data.message || 'Gagal membersihkan server.');
+    }
+  } catch (err) {
+    showResult('error', 'Terjadi kesalahan jaringan / API tidak tersedia.');
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function showResult(type, msg) {
+  const result = document.getElementById('resultClear');
+  if(result) {
+    result.className = 'result ' + type;
+    result.textContent = msg;
+    result.style.display = 'block';
+  }
+}
+  
+document.querySelector('[data-page="server"]').addEventListener('click', loadServers);
+</script>
+
+<script>
+/* ---------- Mini-Bar — Server Page ---------- */
+(function(){
+  const barGroup  = document.getElementById('barGroupServer');
+  const btnPlay   = document.getElementById('btnPlayServer');
+  const barColor  = document.getElementById('barColorServer');
+  const txtUser   = document.getElementById('txtUserServer');
+  const txtServer = document.getElementById('txtServerServer');
+
+  if (!barGroup) return; 
+
+  let barUser = 0, barServer = 0;
+  const maxH  = 280;
+
+  function renderBar() {
+    barGroup.innerHTML = '';
+    const max = Math.max(userCount, serverCount, 1);
+    const wBar = 60, gap = 40;
+    const xUser = 0, xServ = xUser + wBar + gap;
+
+    const uRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    uRect.setAttribute('x', xUser);
+    uRect.setAttribute('y', maxH);
+    uRect.setAttribute('width', wBar);
+    uRect.setAttribute('height', 0);
+    uRect.setAttribute('fill', 'url(#barGradServer)');
+    uRect.setAttribute('rx', 8);
+    uRect.setAttribute('data-target-h', (barUser/maxH)*maxH);
+    uRect.setAttribute('data-target-y', maxH - (barUser/maxH)*maxH);
+    barGroup.appendChild(uRect);
+
+    const sRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    sRect.setAttribute('x', xServ);
+    sRect.setAttribute('y', maxH);
+    sRect.setAttribute('width', wBar);
+    sRect.setAttribute('height', 0);
+    sRect.setAttribute('fill', 'url(#barGradServer)');
+    sRect.setAttribute('rx', 8);
+    sRect.setAttribute('data-target-h', (barServer/maxH)*maxH);
+    sRect.setAttribute('data-target-y', maxH - (barServer/maxH)*maxH);
+    barGroup.appendChild(sRect);
+
+    ['User','Server'].forEach((lab,i)=>{
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x', i===0? xUser+wBar/2 : xServ+wBar/2);
+      t.setAttribute('y', maxH+18);
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('font-size','12');
+      t.setAttribute('fill','rgba(255,255,255,.7)');
+      t.textContent = lab;
+      barGroup.appendChild(t);
+    });
+  }
+
+  function animateBar() {
+    const rects = barGroup.querySelectorAll('rect');
+    rects.forEach((r,idx)=>{
+      const targetH = parseFloat(r.getAttribute('data-target-h'));
+      const targetY = parseFloat(r.getAttribute('data-target-y'));
+      const start = performance.now() + idx*120;
+      const dur   = 800;
+      function frame(t){
+        const el  = t - start;
+        if(el<0){ requestAnimationFrame(frame); return; }
+        const p   = Math.min(1, el/dur);
+        const ease= 1 - Math.pow(1-p,3);
+        const h   = ease * targetH;
+        const y   = maxH - h;
+        r.setAttribute('height', h);
+        r.setAttribute('y', y);
+        if(p<1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  function shadeColor(hex,percent){
+    const num=parseInt(hex.slice(1),16);
+    const r=Math.min(255,Math.max(0,(num>>16)+percent));
+    const g=Math.min(255,Math.max(0,((num>>8)&0x00FF)+percent));
+    const b=Math.min(255,Math.max(0,(num&0x0000FF)+percent));
+    return '#' + (0x1000000+(r<<16)+(g<<8)+b).toString(16).slice(1);
+  }
+
+  if(barColor) {
+    barColor.addEventListener('input',()=>{
+      const c1 = barColor.value;
+      const c2 = shadeColor(c1,-30);
+      document.querySelector('#barGradServer stop:nth-child(1)').setAttribute('stop-color',c1);
+      document.querySelector('#barGradServer stop:nth-child(2)').setAttribute('stop-color',c2);
+    });
+  }
+
+  if(btnPlay) btnPlay.addEventListener('click', animateBar);
+
+  function updateBarServer(){
+    if(txtUser) txtUser.textContent   = userCount;
+    if(txtServer) txtServer.textContent = serverCount;
+    barUser   = userCount;
+    barServer = serverCount;
+    renderBar();
+    setTimeout(animateBar, 300);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(updateBarServer, 1000);
+  });
+})();
+</script>
+</body>
+</html>
