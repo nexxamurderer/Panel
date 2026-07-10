@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Admin &ndash; Panel Reseller</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #0b0e22; 
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      padding: 1rem;
+      overflow: hidden;
+    }
+
+    .login-card {
+      background-color: #131931; 
+      width: 100%;
+      max-width: 420px;
+      padding: 2.5rem 2rem;
+      border-radius: 24px; 
+      text-align: center;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    .logo-placeholder {
+      width: 100%;
+      height: auto;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .login-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #ffffff;
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 20px;
+      background-color: #1a2242; 
+      border: none;
+      border-radius: 50px; 
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: background-color 0.2s;
+    }
+
+    input:focus {
+      background-color: #212b54;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      color: #ffffff;
+      margin-top: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-login {
+      background-color: #2ecc71; 
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Ripple Effect */
+    .btn span.ripple {
+      position: absolute;
+      border-radius: 50%;
+      transform: scale(0);
+      animation: ripple .6s linear;
+      background: rgba(255, 255, 255, 0.35);
+    }
+    @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+    .loading {
+      margin-top: 1.2rem;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.9rem;
+      color: #8b9bb4;
+    }
+
+    .error {
+      margin-top: 1.2rem;
+      padding: 12px;
+      background: rgba(255, 71, 87, 0.1);
+      border-radius: 12px;
+      color: #ff4757;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    .footer-text {
+      margin-top: 2rem;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.8rem;
+      color: #ffffff;
+      letter-spacing: 0.03em;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="logo-placeholder"></div>
+
+    <div class="login-title">Login Admin</div>
+
+    <div class="form-group">
+      <label for="adminkey">Admin Key</label>
+      <input id="adminkey" type="password" placeholder="Masukkan ADMIN_KEY" autocomplete="off">
+    </div>
+
+    <button id="btnLogin" class="btn btn-login">Masuk</button>
+
+    <div class="loading" id="loading" style="display:none;">⏳ Memeriksa...</div>
+    <div class="error" id="error"></div>
+  </div>
+
+  <div class="footer-text">
+    © 2020 - 2026 NEXXA OFFICIAL
+  </div>
+
+  <script>
+  /* Ripple effect on click */
+  document.getElementById('btnLogin').addEventListener('click', function(e) {
+    const btn = e.currentTarget;
+    const circle = document.createElement('span');
+    const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+    const radius = diameter / 2;
+    circle.style.width = circle.style.height = diameter + 'px';
+    circle.style.left = (e.clientX - btn.getBoundingClientRect().left - radius) + 'px';
+    circle.style.top = (e.clientY - btn.getBoundingClientRect().top - radius) + 'px';
+    circle.classList.add('ripple');
+    btn.appendChild(circle);
+    setTimeout(() => circle.remove(), 600);
+    loginAdmin();
+  });
+
+  /* Core login function */
+  async function loginAdmin() {
+    const key = document.getElementById('adminkey').value.trim();
+    const loading = document.getElementById('loading');
+    const errorBox = document.getElementById('error');
+    loading.style.display = 'block';
+    errorBox.textContent = '';
+
+    try {
+      const res = await fetch('/api/adminLogin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key })
+      });
+      const data = await res.json();
+      loading.style.display = 'none';
+
+      if (res.ok && data.success) {
+        localStorage.setItem('admin_token', key);
+        window.location.href = '/admin/dashboard/';
+      } else {
+        errorBox.textContent = data.message || 'Login gagal!';
+      }
+    } catch (err) {
+      loading.style.display = 'none';
+      errorBox.textContent = 'Terjadi kesalahan: ' + err.message;
+    }
+  }
+
+  /* Enter key support */
+  document.getElementById('adminkey').addEventListener('keyup', e => {
+    if (e.key === 'Enter') document.getElementById('btnLogin').click();
+  });
+  </script>
+</body>
+</html>
